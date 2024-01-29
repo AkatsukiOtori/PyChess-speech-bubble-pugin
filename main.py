@@ -5,10 +5,13 @@ import svgwrite
 import textwrap
 import sys
 
+# initial board: default svg file in chess.svg
 initial_board_size = 390
 initial_line_width = 15
 initial_block_size = 45
+# Make scale bigger if you want chess board take more space in blank canvas(not recommend)
 scale = 3
+# Make zoom factor bigger if you want to generate bigger canvas and board
 zoom_factor = 3
 canvas_size = zoom_factor * initial_board_size
 board_height = canvas_size / scale * (scale - 1)
@@ -18,13 +21,26 @@ block_width = initial_block_size * (zoom_factor - 1)
 
 
 def create_blank_svg(width, height):
+    """
+    Create a blank svg file with width and height
+    """
     blank = svgwrite.Drawing(size=(width, height))
     blank = blank.tostring()
     return blank
 
 
 def combine_two_svg(width, height, x, y, new_svg, old_svg, svg_type):
-
+    """
+    Combine two svg files into one new svg
+    :param width: the width of the new svg
+    :param height: the height of the new svg
+    :param x: the x coordinate of the new svg on the old svg
+    :param y: the y coordinate of the new svg on the old svg
+    :param new_svg: the one who used to paste on old svg
+    :param old_svg: canvas
+    :param svg_type: str or svg
+    :return: combined svg (str form)
+    """
     old_tree = ET.ElementTree(ET.fromstring(old_svg))
     old_root = old_tree.getroot()
 
@@ -50,6 +66,10 @@ def combine_two_svg(width, height, x, y, new_svg, old_svg, svg_type):
 
 
 def generate_new_board():
+    """
+    Generate a new canvas, and paste current chess board on specific position
+    :return: Generated chess board
+    """
     blank_tree = ET.ElementTree(ET.fromstring(create_blank_svg(canvas_size, canvas_size)))
     blank_root = blank_tree.getroot()
 
@@ -77,10 +97,19 @@ def generate_new_board():
 
 
 def fit_text_in_bubble(max_height, max_width, text, font_family="Arial", line_spacing=1.2):
-    # Constants
+    """
+    Create a fitted text svg by width and height
+    :param max_height: max height of the speech bubble
+    :param max_width: max width of the speech bubble
+    :param text: text to be fitted
+    """
+    # Change this if you want the minimal text bigger
     min_font_size = 20
 
     def wrap_text(this_text, this_font_size, this_max_width):
+        """
+        Wrap text into lines
+        """
         # Create a Drawing to estimate text size
         temp_dwg = svgwrite.Drawing()
         temp_dwg.add(temp_dwg.text(this_text, insert=(0, 0), font_size=this_font_size, font_family=font_family))
@@ -123,7 +152,11 @@ def fit_text_in_bubble(max_height, max_width, text, font_family="Arial", line_sp
 
 
 def generate_bubble(shape, text):
-
+    """
+    Generate a speech bubble from shape and text
+    :param shape: could be 'think'. 'speak' or 'surprise'
+    :return: speech bubble svg in str form
+    """
     initial_bubble_width = int(block_width * 2)
     bubble_width = initial_bubble_width
     bubble_height = int(block_width * 2)
@@ -156,9 +189,12 @@ def generate_bubble(shape, text):
         return None
 
     blank_bubble = create_blank_svg(bubble_width, bubble_height)
+    # Length of speech bubble growth, will be 0 if it's stay the same
     shape_x = int(bubble_width - initial_bubble_width) * 0.64
     shape_y = 0
+    # generate first speech bubble svg without text
     speech_bubble = combine_two_svg(bubble_width, bubble_height, shape_x * 0.5, shape_y, shape_svg, blank_bubble, 'svg')
+    # Add cropped speech bubble to the left so the speech bubble will be wider
     if shape_x > 0:
         new_blank_bubble = create_blank_svg(shape_x, bubble_height)
         crop_bubble_path = 'texture/crop.svg'
@@ -168,10 +204,9 @@ def generate_bubble(shape, text):
     else:
         text_x = bubble_height / 20
     text_y = bubble_height / 20
+    # Combine speech bubble with text
     combined_svg = combine_two_svg(bubble_width, bubble_height, text_x, text_y, text_svg, speech_bubble, 'str')
     combined_list = [combined_svg, bubble_width, bubble_height, shape_x]
-    with open("speech_bubble.svg", "w") as file:
-        file.write(combined_svg)
     return combined_list
 
 
@@ -180,7 +215,6 @@ def square_to_coordinates(square_name):
     Convert a chess square name (e.g., 'e4') to pixel coordinates.
 
     :param square_name: String, name of the chess square (e.g., 'e4').
-    :param board_size: Tuple (width, height) of the chessboard image in pixels.
     :return: Tuple (x, y) coordinates in pixels.
     """
     # Mapping from letter to x-coordinate (a=0, b=1, ..., h=7)
@@ -198,6 +232,12 @@ def square_to_coordinates(square_name):
 
 
 def generate_board_with_speech_bubble(text, shape, chess_location):
+    """
+    Generate a board with speech bubble and save it as a file
+    :param text: contents in speech bubble
+    :param shape: shape of the speech bubble, could be 'think', 'speak' or 'surprise'
+    :param chess_location: the location of the chess square, could be 'e8' to 'h1'
+    """
     board = generate_new_board()
     if generate_bubble(shape, text) is None or len(text) > 130:
         sys.exit("Text is too long or shape is not recognized. Try again.")
@@ -210,7 +250,6 @@ def generate_board_with_speech_bubble(text, shape, chess_location):
     bubble_x = chess_x - bubble_width / 2 - shape_width
     bubble_y = chess_y - bubble_height * 0.9
     final_board = combine_two_svg(bubble_width, bubble_height, bubble_x, bubble_y, text_bubble, board, 'str')
-    print(board_width, chess_x, chess_y, line_width)
     with open("combined_chessboard_and_speech_bubble.svg", "w") as file:
         file.write(final_board)
 
