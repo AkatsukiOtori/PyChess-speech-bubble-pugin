@@ -168,7 +168,7 @@ def generate_bubble(shape, text):
     if result is False:
         # Increase the width and try again
         bubble_width = int(bubble_width * 1.4)
-        text_width = int(bubble_width * 1.3)
+        text_width = int(bubble_width * 1.2)
         result = fit_text_in_bubble(text_height, text_width, text)
 
         if result is False:
@@ -239,7 +239,7 @@ def generate_board_with_speech_bubble(text, shape, chess_location):
     :param chess_location: the location of the chess square, could be 'e8' to 'h1'
     """
     board = generate_new_board()
-    if generate_bubble(shape, text) is None or len(text) > 130:
+    if generate_bubble(shape, text) is None or len(text) > 144:
         sys.exit("Text is too long or shape is not recognized. Try again.")
     text_bubble = generate_bubble(shape, text)[0]
     bubble_width = generate_bubble(shape, text)[1]
@@ -255,4 +255,4 @@ def generate_board_with_speech_bubble(text, shape, chess_location):
 
 
 # Example use
-generate_board_with_speech_bubble('Hello', 'think', "h1")
+generate_board_with_speech_bubble('Hello Hello Hel oHe llo He llo Hello Hell obh sadl Hello Hello Hel oHe llo He llo Hell', 'surprise', "h8")
